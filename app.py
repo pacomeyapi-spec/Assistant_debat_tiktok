@@ -69,6 +69,12 @@ textarea{min-height:130px}button{background:#23519a;color:white;border:0;border-
 <label>Identifiant de voix ElevenLabs</label><input id="voice" autocomplete="off" placeholder="Voice ID">
 <button onclick="save()">Enregistrer la configuration sur ce Mac</button>
 <p id="saved" class="note"></p>
+<label>Mes questions enregistrées</label>
+<select id="savedQuestions" onchange="loadQuestion()"><option value="">— Choisir une question enregistrée —</option></select>
+<button onclick="saveQuestion()">Enregistrer / mettre à jour la question</button>
+<button onclick="newQuestion()">Nouvelle question</button>
+<button onclick="deleteQuestion()">Supprimer la question sélectionnée</button>
+<p class="note">Les questions sont conservées localement dans ce navigateur sur ton Mac, et peuvent être modifiées puis réenregistrées. Elles ne contiennent pas tes clés API.</p>
 <label>Question ou argument de l'interlocuteur</label>
 <textarea id="question" placeholder="Écris ici la question entendue pendant le débat..."></textarea>
 <label>Longueur de la réponse</label><select id="length"><option value="court">Courte</option><option value="long">Développée</option></select>
@@ -82,6 +88,38 @@ textarea{min-height:130px}button{background:#23519a;color:white;border:0;border-
 </main><script>
 const byId=id=>document.getElementById(id);
 let busy=false;
+const QUESTIONS_KEY='assistantDebatTikTokQuestionsV1';
+function questions(){try{const x=JSON.parse(localStorage.getItem(QUESTIONS_KEY)||'[]');return Array.isArray(x)?x:[]}catch(e){return []}}
+function refreshQuestions(selected=''){
+  const select=byId('savedQuestions');
+  select.replaceChildren(new Option('— Choisir une question enregistrée —',''));
+  questions().forEach(q=>select.add(new Option(q.text.slice(0,105),q.id)));
+  select.value=selected;
+}
+function loadQuestion(){
+  const selected=questions().find(q=>q.id===byId('savedQuestions').value);
+  if(selected){byId('question').value=selected.text;status('Question chargée. Tu peux la modifier avant de générer la réponse.')}
+}
+function newQuestion(){byId('savedQuestions').value='';byId('question').value='';byId('question').focus();status('Nouvelle question prête à saisir.')}
+function saveQuestion(){
+  const value=byId('question').value.trim();
+  if(!value){status('Écris d’abord une question à enregistrer.');return}
+  if(value.length>6000){status('La question est trop longue.');return}
+  const list=questions(),id=byId('savedQuestions').value;
+  const index=list.findIndex(q=>q.id===id);
+  const selected=index>=0?id:String(Date.now())+'-'+Math.random().toString(36).slice(2);
+  if(index>=0)list[index].text=value;else list.push({id:selected,text:value});
+  try{localStorage.setItem(QUESTIONS_KEY,JSON.stringify(list));refreshQuestions(selected);status('Question enregistrée sur ce Mac.')}
+  catch(e){status('Enregistrement impossible : stockage du navigateur indisponible.')}
+}
+function deleteQuestion(){
+  const id=byId('savedQuestions').value;
+  if(!id){status('Sélectionne une question enregistrée à supprimer.');return}
+  try{localStorage.setItem(QUESTIONS_KEY,JSON.stringify(questions().filter(q=>q.id!==id)));
+    refreshQuestions();byId('question').value='';status('Question supprimée.')}
+  catch(e){status('Suppression impossible.')}
+}
+refreshQuestions();
 function status(msg){byId('status').textContent=msg}
 async function api(path,data){
   const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
