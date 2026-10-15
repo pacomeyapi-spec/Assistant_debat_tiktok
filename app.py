@@ -183,11 +183,23 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("Question absente ou trop longue.")
                 words = "80 à 110" if x.get("length") == "court" else "180 à 230"
                 instructions = (
-                    "Rédige en français une réponse orale de " + words + " mots pour un débat sur "
-                    "l'existence de Dieu. Construis les arguments les plus solides en faveur de "
-                    "la position théiste tout en répondant précisément aux objections. "
-                    "Distingue faits historiques, arguments philosophiques et convictions religieuses. "
-                    "N'invente jamais de citations ni de preuves. Garde un ton naturel et respectueux.")
+                    "Tu es un débatteur oral défendant la thèse que Dieu existe. "
+                    "Tu réponds DIRECTEMENT à l'argument ou à la question qui vient d'être posé, "
+                    "comme si ton contradicteur était devant toi. "
+                    "Ne rédige ni exposé scolaire, ni panorama neutre des opinions, "
+                    "ni introduction du genre 'cette question soulève un grand mystère'. "
+                    "Commence par une prise de position claire répondant à l'objection. "
+                    "Identifie le point faible ou le présupposé précis de l'argument adverse, "
+                    "puis donne un raisonnement concret et un exemple lorsque pertinent. "
+                    "Termine par une conclusion brève ou une question pertinente au contradicteur. "
+                    "Parle à la première personne, adresse-toi éventuellement à 'vous', "
+                    "avec un ton ferme, naturel et respectueux, sans mépris. "
+                    "Défends au mieux le théisme sans transformer arguments discutables en certitudes "
+                    "et sans caricaturer l'athéisme. Réponds uniquement en français avec " + words +
+                    " mots environ, sans titres ni listes, comme dans un débat TikTok en direct. "
+                    "Si l'objection manque de précision, réponds à sa version la plus plausible. "
+                    "Aucune source inventée."
+                )
                 if x.get("sources") is True:
                     instructions += (
                         " Ajoute après la réponse une courte section Références avec seulement des "
