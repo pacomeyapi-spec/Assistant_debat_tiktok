@@ -76,7 +76,9 @@ textarea{min-height:130px}button{background:#23519a;color:white;border:0;border-
 <button onclick="deleteQuestion()">Supprimer la question sélectionnée</button>
 <p class="note">Les questions sont conservées localement dans ce navigateur sur ton Mac, et peuvent être modifiées puis réenregistrées. Elles ne contiennent pas tes clés API.</p>
 <label>Question ou argument de l'interlocuteur</label>
-<textarea id="question" placeholder="Écris ici la question entendue pendant le débat..."></textarea>
+<textarea id="question" placeholder="Écris ou dicte ici la question entendue pendant le débat..."></textarea>
+<button id="micButton" onclick="toggleDictation()">🎤 Dicter la question</button>
+<p class="note">Autorise le microphone si le navigateur le demande. Tu peux corriger le texte dicté avant de préparer la réponse. La reconnaissance vocale du navigateur peut utiliser un service en ligne.</p>
 <label>Longueur de la réponse</label><select id="length"><option value="court">Courte</option><option value="long">Développée</option></select>
 <label style="font-weight:400"><input type="checkbox" id="sources"> Réponse avec références (facultatif)</label>
 <button onclick="draft(false)">Préparer une réponse</button><button onclick="draft(true)">Répondre maintenant</button>
@@ -120,6 +122,29 @@ function deleteQuestion(){
   catch(e){status('Suppression impossible.')}
 }
 refreshQuestions();
+let recognizer=null, listening=false, dictatedPrefix='';
+function toggleDictation(){
+  if(listening){recognizer.stop();return}
+  const Speech=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!Speech){status('Dictée indisponible dans ce navigateur. Essaie Google Chrome sur ton Mac, ou la fonction Dictée de macOS.');return}
+  recognizer=new Speech();
+  recognizer.lang='fr-FR';
+  recognizer.continuous=true;
+  recognizer.interimResults=true;
+  dictatedPrefix=byId('question').value.trim();
+  recognizer.onstart=()=>{listening=true;byId('micButton').textContent='⏹ Arrêter la dictée';status('Micro actif : prononce ta question.')};
+  recognizer.onresult=(event)=>{
+    let finalText='',interim='';
+    for(let i=0;i<event.results.length;i++){
+      const transcript=event.results[i][0].transcript;
+      if(event.results[i].isFinal)finalText+=transcript+' ';else interim+=transcript;
+    }
+    byId('question').value=[dictatedPrefix,finalText.trim(),interim.trim()].filter(Boolean).join(' ').trim();
+  };
+  recognizer.onerror=(event)=>{status('Dictée : '+event.error+'. Vérifie les autorisations du microphone et ta connexion.')};
+  recognizer.onend=()=>{listening=false;byId('micButton').textContent='🎤 Dicter la question'};
+  try{recognizer.start()}catch(e){status('Impossible de démarrer la dictée : '+e.message)}
+}
 function status(msg){byId('status').textContent=msg}
 async function api(path,data){
   const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
