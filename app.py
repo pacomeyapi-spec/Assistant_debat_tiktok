@@ -20,7 +20,7 @@ PAGE = """<!doctype html><html lang="fr"><meta charset="utf-8"><meta name="viewp
 let busy=false;
 function status(s){document.getElementById('status').textContent=s}
 async function api(path, payload){let r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});let j=await r.json();if(!r.ok)throw Error(j.error||'Erreur');return j}
-async function draft(auto){if(busy)return;busy=true;try{status('Préparation de la réponse…');let j=await api('/draft',{key:oa.value,question:question.value,length:length.value});answer.value=j.text;status('Réponse préparée. Tu peux la modifier.');if(auto)await speak()}catch(e){status(e.message)}finally{busy=false}}
+async function draft(auto){if(busy)return;busy=true;try{status('Préparation de la réponse…');let j=await api('/draft',{key:oa.value,question:question.value,length:document.getElementById('length').value});answer.value=j.text;status('Réponse préparée. Tu peux la modifier.');if(auto)await speak()}catch(e){status(e.message)}finally{busy=false}}
 async function speak(){try{status('Création de la voix…');let j=await api('/speak',{key:el.value,voice:voice.value,text:answer.value});stopAudio();player.src='data:audio/mpeg;base64,'+j.audio;await player.play();status('Lecture en cours sur le Mac.')}catch(e){status(e.message)}}
 function stopAudio(){player.pause();player.currentTime=0}
 </script></html>"""
